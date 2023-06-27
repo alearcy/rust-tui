@@ -53,12 +53,25 @@ fn main() -> Result<(), io::Error> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-
-    terminal.draw(|f| {
-        ui(f);
-    })?;
-
-    thread::sleep(Duration::from_millis(5000));
+    loop {
+        terminal
+            .draw(|f| {
+                ui(f);
+            })
+            .unwrap();
+        if crossterm::event::poll(Duration::from_secs(0))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char(c) => {
+                        if c == 'q' {
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
 
     // restore terminal
     disable_raw_mode()?;
